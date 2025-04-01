@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from Tools.scripts.var_access_benchmark import loop_overhead
 
 # Example User Inputs
 event = datetime.strptime("1981-10-01", '%Y-%m-%d')
