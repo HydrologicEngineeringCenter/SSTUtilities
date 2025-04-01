@@ -1,7 +1,7 @@
 from hecdss import HecDss, PairedData
 import pandas as pd
 
-# User Inputs
+# Example User Inputs
 realization_name = "HUC4 A14 Normalized"
 hms_project_path = "C:/Users/q0hecgsk/Desktop/Kanawha_Precip_SST/"
 results_b_part = "Kanawha"
