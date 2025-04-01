@@ -3,14 +3,14 @@ import pandas as pd
 
 # Example User Inputs
 realization_name = "HUC4 A14 Normalized"
-hms_project_path = "C:/Users/q0hecgsk/Desktop/Kanawha_Precip_SST/"
+hms_project_path = "C:/Users/q0hecgsk/Desktop/Kanawha_Precip_SST"
 results_b_part = "Kanawha"
 number_events_per_year = 10
 number_years = 1000
 
 
 def extract_precipitation_results(realiz_name: str, project_path: str, b_part: str) -> PairedData :
-    dss_file = project_path + realiz_name.replace(" ", "_") + ".dss"
+    dss_file = f"{project_path}/{realiz_name.replace(' ', '_')}.dss"
     pathname_total_precip = \
         f"//{b_part}/Realization-Precipitation Total///MCA:{realiz_name}/"
     with HecDss(dss_file) as dss:
