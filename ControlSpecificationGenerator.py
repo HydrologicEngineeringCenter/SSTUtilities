@@ -45,5 +45,3 @@ def generate_control_spec(event_date: datetime, duration: int, lookback: int, pa
     with open(output_filepath, "w") as o:
         for line in line_list:
             o.write(line)
-
-generate_control_spec(event, storm_duration_hours, lookback_duration_hours, time_padding_hours, base_control_spec)
