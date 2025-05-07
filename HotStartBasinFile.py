@@ -11,14 +11,15 @@ synthetic_event_date = datetime.strptime("1981-10-01", '%Y-%m-%d')
 ## copies an existing basin file but overwrites certain initial condition parameters with states from another
 #### simulation run within the same HMS project. assumes certain processes are being used:
 #### deficit-constant loss, simple canopy (or none), simple surface (or none), linear reservoir baseflow (2 layers) and
-###### Muskingum-Cunge reach
+###### Muskingum-Cunge reach. Assumes reservoirs initialized with a starting elevation.
 ## canopy and surface initial condition should be depth, not percent
 ## linear reservoir initial baseflow should be discharge, not discharge per area
 ## Muskingum-Cunge reach initial condition should be specified discharge, not inflow = outflow
 ## it also unlinks any observed data from the model
 ## it also changes the name of the sqlite file to match the new basin model name
 ## the generated basin model file is in a subdirectory of the HMS project's data folder
-def generate_hotstarted_basin_file(hms_project_path: str, base_basin: str, por_run: str, date: datetime) -> None:
+def generate_hotstarted_basin_file(hms_project_path: str, base_basin: str, por_run: str,
+                                   por_dss: HecDss, date: datetime) -> None:
     base_basin_filepath = f"{hms_project_path}/{base_basin}.basin"
     basin_override_name = f"{date.strftime('%Y-%m-%d')}_{base_basin}"
 
@@ -50,7 +51,7 @@ def generate_hotstarted_basin_file(hms_project_path: str, base_basin: str, por_r
                     elem = line_split[1].strip()
                     line_final = line
                 case line_start if line_start in initial_parameter_line_starts:
-                    line_final = retrieve_value_format_line(hms_project_path, por_run, elem, line_start, date)
+                    line_final = retrieve_value_format_line(por_dss, por_run, elem, line_start, date)
                 case "     File":
                     line_final = line_start + ": " + basin_override_name + ".sqlite\n"
                 case line_start if line_start in observed_data:
@@ -69,29 +70,25 @@ def generate_hotstarted_basin_file(hms_project_path: str, base_basin: str, por_r
             o.write(line)
 
 ## dry - utility function to take the basin file's parameter indicator and return the line to replace it
-def retrieve_value_format_line(path: str, run: str, el: str, line_start: str, date: datetime) -> str:
+def retrieve_value_format_line(por_dss: HecDss, run: str, el: str, line_start: str, date: datetime) -> str:
     par = line_start.strip()
-    replace_value = retrieve_initial_value(path, run, el, par, date)
+    replace_value = retrieve_initial_value(por_dss, run, el, par, date)
     return f"{line_start}: {replace_value:.3f}\n"
 
 ## one function for handling all the parameters so you can see which parameters are supported in one place
 ## this assumes your POR is at daily timestep and retrieves the data for the day ending before the start of
 #### your requested event date
-def retrieve_initial_value(path: str, run: str, element: str, param: str, date: datetime) -> float:
-    por_filename =  f"{path}/{run.replace(' ', '_')}.dss"
-    dss_file = HecDss(por_filename)
-
+def retrieve_initial_value(por_dss: HecDss, run: str, element: str, param: str, date: datetime) -> float:
     c_part_dict = \
         {"Initial Deficit" : "MOISTURE DEFICIT",
          "Initial Canopy Storage Depth": "STORAGE-CANOPY",
          "Initial Surface Storage Depth": "STORAGE-SURFACE",
          "GW-1 Initial Baseflow": "FLOW-BASE-1",
          "GW-2 Initial Baseflow" : "FLOW-BASE-2",
-         "Initial Outflow" : "FLOW-COMBINE",
+         "Initial Outflow" : "FLOW",
          "Initial Elevation" : "ELEVATION"}
 
     pathname = f"//{element}/{c_part_dict.get(param)}//1Day/RUN:{run}/"
-    arr = dss_file.get(pathname, date, date).values
-    dss_file.close()
+    arr = por_dss.get(pathname, date, date).values
     value = float(arr[0])
     return value
